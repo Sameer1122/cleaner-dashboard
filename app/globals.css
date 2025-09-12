@@ -12,6 +12,7 @@
   --muted-foreground: #71717a;
   --ring: #2563eb;
   --input: #e5e7eb;
+  --sidebar-w: 14rem;
 }
 
 @theme inline {
@@ -30,24 +31,44 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary: #1d4ed8;
-    --primary-foreground: #ffffff;
-    --secondary: #27272a;
-    --secondary-foreground: #ededed;
-    --accent: #27272a;
-    --accent-foreground: #ededed;
-    --muted-foreground: #a1a1aa;
-    --ring: #1d4ed8;
-    --input: #3f3f46;
-  }
+/* Dark theme via .dark class only (no OS override) */
+
+/* Explicit dark theme override when `.dark` class is present on <html> */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --secondary: #27272a;
+  --secondary-foreground: #ededed;
+  --accent: #27272a;
+  --accent-foreground: #ededed;
+  --muted-foreground: #a1a1aa;
+  --ring: #1d4ed8;
+  --input: #3f3f46;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Syncfusion Scheduler: consistent styling for cleaning events */
+/* Applied via CalendarEvent.CssClass = 'evt-cleaning' */
+.e-schedule .e-appointment.evt-cleaning,
+.e-schedule .e-appointment.evt-cleaning .e-appointment-details,
+.e-schedule .e-appointment.evt-cleaning .e-subject {
+  background-color: #eff6ff; /* blue-50 */
+  border-color: #bfdbfe;     /* blue-200 */
+  color: #1e3a8a;            /* blue-900 */
+}
+
+/* Optional: reservation styling hook if needed in future */
+.e-schedule .e-appointment.evt-reservation,
+.e-schedule .e-appointment.evt-reservation .e-appointment-details,
+.e-schedule .e-appointment.evt-reservation .e-subject {
+  background-color: #ecfdf5; /* emerald-50 */
+  border-color: #a7f3d0;     /* emerald-200 */
+  color: #064e3b;            /* emerald-900 */
 }

@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@syncfusion/ej2": "^27",
+    "@syncfusion/ej2-react-schedule": "^27",
     "@tanstack/react-query": "^5.85.9",
     "next": "15.5.2",
     "react": "19.1.0",

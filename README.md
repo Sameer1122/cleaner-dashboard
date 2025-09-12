@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This project is a Next.js (App Router) dashboard using TypeScript, Tailwind (v4), shadcn-style UI primitives, TanStack Query, and a Syncfusion Scheduler for managing reservations and cleanings.
 
 ## Getting Started
 
-First, run the development server:
+Install and run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scheduler (Syncfusion) Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Install dependencies:
 
-## Learn More
+```bash
+pnpm add @syncfusion/ej2 @syncfusion/ej2-react-schedule
+```
 
-To learn more about Next.js, take a look at the following resources:
+Global CSS: the cleaner page imports the Syncfusion Material theme via `@syncfusion/ej2/material.css`. If your installed version prefers per-package CSS, swap to `@syncfusion/ej2-react-schedule/styles/material.css`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Key files:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `types/domain.ts`: Property, Reservation, Cleaning, Cleaner, CalendarEvent, and mapping helpers.
+- `components/scheduler/Scheduler.tsx`: ScheduleComponent with Timeline views, drag/drop, resize, overlap validation, and a cleaner assignment drawer.
+- `components/scheduler/mockData.ts`: Sample data for properties/reservations and auto-generated turnover cleanings.
+- `components/scheduler/eventTemplate.tsx`: Custom event template for reservation vs cleaning.
+- `app/(protected)/cleaner/page.tsx`: Wires the scheduler into the Protected layout.
 
-## Deploy on Vercel
+Features:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- TimelineDay/Week/Month with virtualization enabled.
+- Toggle grouping between Properties and Cleaners (row-per-resource), `byGroupID` enabled.
+- Drag/drop and resize with validation to prevent overlapping cleanings on the same property or cleaner.
+- Assignment drawer for reassigning cleaners.
+- Legends and mock sample data included.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Performance:
+
+- The scheduler supports virtualization. For large datasets, load events only for the current view range using the `chunkByRange` helper (see `types/domain.ts`) and the scheduler’s `dataBound`/`navigating` hooks.
+
+Edge cases and validation:
+
+- Back-to-back stays (cleaning slot generation immediately after checkout).
+- Time zone awareness via ISO offsets. Optionally set a scheduler `timezone` or normalize inputs.
+
+Hostfully integration:
+
+- Types and mappers in `lib/integrations/hostfully.ts` (skeleton). Configure `HOSTFULLY_BASE_URL` and `HOSTFULLY_API_TOKEN` and implement API routes under `app/api/hostfully/*` to proxy data.
+
+Testing suggestions:
+
+- E2E: verify drag/drop constraints, drawer-based reassignment, back-to-back stays, and toggling between resource views. Validate rendering across DST boundaries.
