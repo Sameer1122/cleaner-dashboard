@@ -3,8 +3,16 @@ import Scheduler from "@/components/scheduler/Scheduler";
 import AssignmentsTable from "@/components/scheduler/AssignmentsTable";
 import { generateMockData } from "@/components/scheduler/mockData";
 
-// Import Syncfusion theme CSS for the scheduler
-import "@syncfusion/ej2/material.css";
+// Import only the required Syncfusion styles to avoid bundling issues
+import "@syncfusion/ej2-base/styles/material.css";
+import "@syncfusion/ej2-buttons/styles/material.css";
+import "@syncfusion/ej2-calendars/styles/material.css";
+import "@syncfusion/ej2-dropdowns/styles/material.css";
+import "@syncfusion/ej2-inputs/styles/material.css";
+import "@syncfusion/ej2-lists/styles/material.css";
+import "@syncfusion/ej2-navigations/styles/material.css";
+import "@syncfusion/ej2-popups/styles/material.css";
+import "@syncfusion/ej2-schedule/styles/material.css";
 
 export default function Home() {
   // Generate 50 dummy properties with reservations and turnover cleaning between stays

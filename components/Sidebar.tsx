@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 type Item = {
   href: string;
   label: string;
-  icon: (active: boolean) => JSX.Element;
+  icon: (active: boolean) => ReactNode;
 };
 
 const items: Item[] = [
