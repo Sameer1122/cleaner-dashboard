@@ -13,9 +13,10 @@ import {
   DragAndDrop,
   Resize,
 } from "@syncfusion/ej2-react-schedule";
-import { registerLicense } from "@syncfusion/ej2-base";
+// import { registerLicense } from "@syncfusion/ej2-base";
 
 import { CalendarEvent, Cleaner, Property, Reservation, Cleaning, mapCleaningToEvent, mapReservationToEvent, overlaps } from "@/types/domain";
+import type { EventClickArgs } from "@syncfusion/ej2-react-schedule";
 import { generateMockData } from "./mockData";
 import { eventTemplateAdapter } from "./eventTemplate";
 import AssignmentDrawer from "./AssignmentDrawer";
@@ -55,8 +56,9 @@ export default function Scheduler({ properties, cleaners, reservations, cleaning
 
   const cleanerResource = useMemo(() => dsCleaners.map((c) => ({ id: c.id, text: c.name, color: c.color || "#666" })), [dsCleaners]);
 
-  function onEventClick(args: any) {
-    const e = args?.data as CalendarEvent | undefined;
+  function onEventClick(args: EventClickArgs) {
+    const raw = Array.isArray(args?.event) ? args.event[0] : args?.event;
+    const e = raw as CalendarEvent | undefined;
     if (!e) return;
     if (e.Type === "cleaning") {
       setSelectedEvent(e);
@@ -136,23 +138,23 @@ export default function Scheduler({ properties, cleaners, reservations, cleaning
       </div>
 
       <ScheduleComponent
-        ref={(s) => (scheduleRef.current = s)}
+        ref={(s) => {
+          scheduleRef.current = s;
+        }}
         height="78vh"
         selectedDate={selectedDate}
         currentView="TimelineWeek"
         allowDragAndDrop={true}
         allowResizing={true}
-        allowVirtualization={true}
         eventSettings={{
           dataSource: data as any,
           template: eventTemplateAdapter as any,
           fields: {
             id: "Id",
-            subject: "Subject",
-            startTime: "StartTime",
-            endTime: "EndTime",
-            isAllDay: "IsAllDay",
-            cssClass: "CssClass",
+            subject: { name: "Subject" },
+            startTime: { name: "StartTime" },
+            endTime: { name: "EndTime" },
+            isAllDay: { name: "IsAllDay" },
           },
         }}
         group={{ byGroupID: true, resources: viewMode === "properties" ? ["Properties"] : ["Cleaners"], enableCompactView: false }}
