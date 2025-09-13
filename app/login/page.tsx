@@ -159,26 +159,29 @@ export default function LoginPage() {
               )}
 
               <div className="space-y-4">
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 grid w-10 place-items-center text-muted-foreground">
-                    {/* Mail icon */}
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M3 7l9 6 9-6" />
-                      <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
-                    </svg>
-                  </span>
-                  <Input
-                    type="email"
-                    placeholder="Email address"
-                    className={
-                      "pl-10 " +
-                      (errors.email ? "border-red-500 focus-visible:ring-red-500" : "")
-                    }
-                    aria-invalid={!!errors.email}
-                    aria-describedby={errors.email ? "email-error" : undefined}
-                    autoComplete="email"
-                    {...register("email")}
-                  />
+                {/* Email field */}
+                <div>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-0 top-1/2 grid w-10 -translate-y-1/2 place-items-center text-muted-foreground">
+                      {/* Mail icon */}
+                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M3 7l9 6 9-6" />
+                        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                      </svg>
+                    </span>
+                    <Input
+                      type="email"
+                      placeholder="Email address"
+                      className={
+                        "pl-10 " +
+                        (errors.email ? "border-red-500 focus-visible:ring-red-500" : "")
+                      }
+                      aria-invalid={!!errors.email}
+                      aria-describedby={errors.email ? "email-error" : undefined}
+                      autoComplete="email"
+                      {...register("email")}
+                    />
+                  </div>
                   {errors.email && (
                     <p id="email-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
                       {errors.email.message as string}
@@ -186,48 +189,51 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 grid w-10 place-items-center text-muted-foreground">
-                    {/* Lock icon */}
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="4" y="11" width="16" height="9" rx="2" />
-                      <path d="M8 11V7a4 4 0 118 0v4" />
-                    </svg>
-                  </span>
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    className={
-                      "pr-10 pl-10 " +
-                      (errors.password ? "border-red-500 focus-visible:ring-red-500" : "")
-                    }
-                    aria-invalid={!!errors.password}
-                    aria-describedby={errors.password ? "password-error" : undefined}
-                    autoComplete="current-password"
-                    {...register("password")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute inset-y-0 right-0 grid w-10 place-items-center text-muted-foreground hover:text-foreground"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? (
-                      // Eye-off icon
+                {/* Password field */}
+                <div>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-0 top-1/2 grid w-10 -translate-y-1/2 place-items-center text-muted-foreground">
+                      {/* Lock icon */}
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M3 3l18 18" />
-                        <path d="M10.58 10.58A3 3 0 0012 15a3 3 0 002.12-.88" />
-                        <path d="M9.88 5.09A10.94 10.94 0 0112 5c7 0 10 7 10 7a14.49 14.49 0 01-3.17 4.33" />
-                        <path d="M6.61 6.61A14.49 14.49 0 002 12s3 7 10 7a10.94 10.94 0 003.9-.72" />
+                        <rect x="4" y="11" width="16" height="9" rx="2" />
+                        <path d="M8 11V7a4 4 0 118 0v4" />
                       </svg>
-                    ) : (
-                      // Eye icon
-                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
+                    </span>
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Password"
+                      className={
+                        "pr-10 pl-10 " +
+                        (errors.password ? "border-red-500 focus-visible:ring-red-500" : "")
+                      }
+                      aria-invalid={!!errors.password}
+                      aria-describedby={errors.password ? "password-error" : undefined}
+                      autoComplete="current-password"
+                      {...register("password")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-0 top-1/2 grid w-10 -translate-y-1/2 place-items-center text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        // Eye-off icon
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M3 3l18 18" />
+                          <path d="M10.58 10.58A3 3 0 0012 15a3 3 0 002.12-.88" />
+                          <path d="M9.88 5.09A10.94 10.94 0 0112 5c7 0 10 7 10 7a14.49 14.49 0 01-3.17 4.33" />
+                          <path d="M6.61 6.61A14.49 14.49 0 002 12s3 7 10 7a10.94 10.94 0 003.9-.72" />
+                        </svg>
+                      ) : (
+                        // Eye icon
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p id="password-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
                       {errors.password.message as string}
