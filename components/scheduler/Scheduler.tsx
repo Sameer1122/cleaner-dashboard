@@ -13,12 +13,16 @@ import {
   DragAndDrop,
   Resize,
 } from "@syncfusion/ej2-react-schedule";
+import { registerLicense } from "@syncfusion/ej2-base";
 
 import { CalendarEvent, Cleaner, Property, Reservation, Cleaning, mapCleaningToEvent, mapReservationToEvent, overlaps } from "@/types/domain";
 import { generateMockData } from "./mockData";
 import { eventTemplateAdapter } from "./eventTemplate";
 import AssignmentDrawer from "./AssignmentDrawer";
 import { Button } from "@/components/ui/button";
+
+// Register Syncfusion license (uses env var if set, otherwise falls back to provided key)
+
 
 type Props = {
   properties?: Property[];

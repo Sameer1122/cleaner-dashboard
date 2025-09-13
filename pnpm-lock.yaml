@@ -14,6 +14,9 @@ importers:
       '@syncfusion/ej2':
         specifier: ^27
         version: 27.2.5
+      '@syncfusion/ej2-base':
+        specifier: ^31.1.17
+        version: 31.1.17
       '@syncfusion/ej2-react-schedule':
         specifier: ^27
         version: 27.2.5
@@ -297,6 +300,10 @@ packages:
     resolution: {integrity: sha512-b72w1BuVpa/185Pqb1pKvfxppi3uAcXhdE7KCiAzle+dv3eIWFDQFhdeYeqZAaKFND4XkPCUZ029T2Ai2SLbuA==}
     hasBin: true
 
+  '@syncfusion/ej2-base@31.1.17':
+    resolution: {integrity: sha512-Jl2Ls77kMfX13VwrAEow/kdDrefX3gh76Uwh943NUtEuChOXzvoe+CHecxJ+49VFRCrLYhB4Hj/7R9UOh65VCg==}
+    hasBin: true
+
   '@syncfusion/ej2-buttons@27.2.4':
     resolution: {integrity: sha512-kZ/MF/gIeqiNMNIEHB6IiLORKX4cs3pkeHALCO2qOPp/0R/2e4KablK40xNALko4g22mbHWBtn6S84Kd3FpVBA==}
 
@@ -347,6 +354,9 @@ packages:
 
   '@syncfusion/ej2-icons@27.2.2':
     resolution: {integrity: sha512-Jl4Dvu+rocNDmY2wEwcwyYlGWJ2xRf8izdnARffR5Lu41OjZIh8fgo4fU2lXHdbqNXApm7DeItDY4soBtjgDCQ==}
+
+  '@syncfusion/ej2-icons@31.1.17':
+    resolution: {integrity: sha512-5IkOJyoUL7MoOjRE+hf2jC/dCjS+Q1Z34oz49mSvK1vKc2kcYR5Wa7o49uwjAgmJUSZK8O2cGE0M3HHSBFIKSw==}
 
   '@syncfusion/ej2-image-editor@27.2.5':
     resolution: {integrity: sha512-ESt+QxM8sfLiHR6dd+B+1OxM6syiPLvmm12sjIDtuvvVP9LKtrl5CQKVaur6IGiKDXS/acsgO4TOXm3OheXWDg==}
@@ -1059,6 +1069,10 @@ snapshots:
     dependencies:
       '@syncfusion/ej2-icons': 27.2.2
 
+  '@syncfusion/ej2-base@31.1.17':
+    dependencies:
+      '@syncfusion/ej2-icons': 31.1.17
+
   '@syncfusion/ej2-buttons@27.2.4':
     dependencies:
       '@syncfusion/ej2-base': 27.2.5
@@ -1200,6 +1214,8 @@ snapshots:
       '@syncfusion/ej2-svg-base': 27.2.2
 
   '@syncfusion/ej2-icons@27.2.2': {}
+
+  '@syncfusion/ej2-icons@31.1.17': {}
 
   '@syncfusion/ej2-image-editor@27.2.5':
     dependencies:
