@@ -14,9 +14,9 @@ export type Reservation = {
   propertyId: string;
   guestName: string;
   start: string; // ISO string with TZ offset
-  end: string;   // ISO string with TZ offset
+  end: string; // ISO string with TZ offset
   source?: string; // OTA / Direct
-  status?: "confirmed" | "cancelled" | "hold";
+  status?: string;
 };
 
 export type CleaningType = "turnover" | "midstay" | "deep";
@@ -27,7 +27,7 @@ export type Cleaning = {
   cleanerId?: string;
   type: CleaningType;
   start: string; // ISO string with TZ offset
-  end: string;   // ISO string with TZ offset
+  end: string; // ISO string with TZ offset
   status?: "pending" | "assigned" | "in_progress" | "done";
   notes?: string;
   reservationId?: string; // optional linkage
@@ -64,7 +64,11 @@ export function subjectFromReservation(r: Reservation, p?: Property): string {
   return `${code}${r.guestName}`.trim();
 }
 
-export function subjectFromCleaning(c: Cleaning, p?: Property, cleanerName?: string): string {
+export function subjectFromCleaning(
+  c: Cleaning,
+  p?: Property,
+  cleanerName?: string
+): string {
   const code = p?.code ? `(${p.code}) ` : "";
   const who = cleanerName ? ` • ${cleanerName}` : "";
   return `${code}${capitalize(c.type)} Clean${who}`.trim();
@@ -74,7 +78,10 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function mapReservationToEvent(r: Reservation, property?: Property): CalendarEvent {
+export function mapReservationToEvent(
+  r: Reservation,
+  property?: Property
+): CalendarEvent {
   return {
     Id: r.id,
     Subject: subjectFromReservation(r, property),
@@ -109,7 +116,10 @@ export function mapCleaningToEvent(
   };
 }
 
-export function overlaps(a: { start: Date; end: Date }, b: { start: Date; end: Date }) {
+export function overlaps(
+  a: { start: Date; end: Date },
+  b: { start: Date; end: Date }
+) {
   return a.start < b.end && b.start < a.end;
 }
 
@@ -135,5 +145,10 @@ export function chunkByRange<T extends CalendarEvent>(
   rangeStart: Date,
   rangeEnd: Date
 ): T[] {
-  return events.filter((e) => overlaps({ start: e.StartTime, end: e.EndTime }, { start: rangeStart, end: rangeEnd }));
+  return events.filter((e) =>
+    overlaps(
+      { start: e.StartTime, end: e.EndTime },
+      { start: rangeStart, end: rangeEnd }
+    )
+  );
 }

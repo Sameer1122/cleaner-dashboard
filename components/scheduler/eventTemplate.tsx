@@ -20,7 +20,7 @@ export function EventTemplate({ data }: Props) {
       <div className="line-clamp-1 font-medium">{data.Subject}</div>
       <div className="mt-0.5 flex items-center gap-2 text-[10px] opacity-80">
         {isCleaning && data.CleanerId ? <span>Cleaner: {data.CleanerId}</span> : null}
-        {isReservation && data.ReservationId ? <span>Resv: {data.ReservationId}</span> : null}
+        {isReservation && data.ReservationId ? <span>Resv: TestingId</span> : null}
       </div>
     </div>
   );

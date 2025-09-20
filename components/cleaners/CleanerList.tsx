@@ -1,4 +1,6 @@
+"use client"
 import { Cleaner } from "@/types/domain";
+import AddCleanerDialog from "./AddCleanerDialog";
 
 type Props = {
   cleaners: Cleaner[];
@@ -26,8 +28,13 @@ function Td({ children, className = "" }: { children: React.ReactNode; className
 export default function CleanerList({ cleaners }: Props) {
   const rows = cleaners.slice().sort((a, b) => a.name.localeCompare(b.name));
   return (
-    <div className="overflow-hidden rounded-xl border border-input/50">
-      <table className="w-full text-sm">
+    <div>
+      <div className="mb-3 flex items-center justify-end">
+        <AddCleanerDialog />
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-input/50">
+        <table className="w-full text-sm">
         <thead className="bg-accent/50 text-muted-foreground">
           <tr>
             <Th>Cleaner</Th>
@@ -51,8 +58,8 @@ export default function CleanerList({ cleaners }: Props) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }
-
