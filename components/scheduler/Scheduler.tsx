@@ -34,6 +34,7 @@ type Props = {
 };
 
 export default function Scheduler({ properties, cleaners, reservations, cleanings }: Props) {
+  console.log({properties, cleaners, reservations, cleanings})
   // Default dataset: 50 properties with turnover cleaning between consecutive stays
   const defaults = useMemo(() => generateMockData(50, 2), []);
 
@@ -145,8 +146,8 @@ export default function Scheduler({ properties, cleaners, reservations, cleaning
     const asArray = (v: any) => (Array.isArray(v) ? v : v ? [v] : []);
     const apiProps: any[] = asArray(root.properties);
     const apiResv: any[] = asArray(root.reservations);
-    const apiClean: any[] = asArray(root.cleanings);
-    const apiCleaners: any[] = asArray(root.cleaners);
+    const apiClean: any[] = asArray(cleanings);
+    const apiCleaners: any[] = asArray(cleaners);
 
     const adaptedReservations: Reservation[] = apiResv.map((r) => ({
       id: String(r.id ?? r.reservationId ?? ""),
@@ -180,7 +181,7 @@ export default function Scheduler({ properties, cleaners, reservations, cleaning
     }));
 
     const adaptedCleaners: Cleaner[] = apiCleaners.map((c) => ({
-      id: String(c.id ?? ""),
+      id: String(c.email?? ""),
       name: String(c.name ?? c.fullName ?? c.initials ?? c.id ?? "Cleaner"),
       color: c.color ?? undefined,
       capacity: c.capacity ?? undefined,

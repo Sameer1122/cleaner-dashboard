@@ -16,7 +16,10 @@ import "@syncfusion/ej2-navigations/styles/material.css";
 import "@syncfusion/ej2-popups/styles/material.css";
 import "@syncfusion/ej2-schedule/styles/material.css";
 import { useQuery } from "@tanstack/react-query";
-import { getAllTheData } from "@/components/scheduler/request";
+import {
+  getAllTheCleanersAndJobs,
+  getAllTheData,
+} from "@/components/scheduler/request";
 
 export default function Home() {
   // Generate 50 dummy properties with reservations and turnover cleaning between stays
@@ -29,10 +32,19 @@ export default function Home() {
     queryKey: ["get-all-the-data"],
     queryFn: getAllTheData,
   });
+  const {
+    data: cleanersData,
+    isPending: cleanersPending,
+    isError: cleanersError,
+    error: cleanersErrorData,
+  } = useQuery({
+    queryKey: ["get-all-the-cleaners-and-jobs"],
+    queryFn: getAllTheCleanersAndJobs,
+  });
   if (isPending || !data) {
     return (
       <div className="h-[100vh] flex justify-center items-center">
-        <Loader className="animate-spin"/>
+        <Loader className="animate-spin" />
       </div>
     );
   }
@@ -55,8 +67,8 @@ export default function Home() {
         <Scheduler
           properties={data?.properties}
           reservations={data?.reservations}
-          cleanings={cleanings}
-          cleaners={cleaners}
+          cleanings={cleanersData?.cleaning_job}
+          cleaners={cleanersData?.cleaners}
         />
       </div>
       <div className="px-4">
