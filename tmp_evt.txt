@@ -3,21 +3,22 @@ import { CalendarEvent } from "@/types/domain";
 type Props = { data: CalendarEvent };
 
 export function EventTemplate({ data }: Props) {
+  console.log({ dataInside: data })
   const isCleaning = data.Type === "cleaning";
   const isReservation = data.Type === "reservation";
-  const subjectData = isCleaning ? JSON.parse(data.Subject) : data.Subject
+
   return (
     <div
       className={
         "pointer-events-none w-full overflow-hidden rounded-md border px-2 py-1 text-[11px] leading-tight " +
         (isCleaning
-          ? "border-blue-200 bg-blue-50 text-blue-900 border-l-4 border-l-blue-500"
+          ? "border-blue-200 bg-blue-50 text-blue-900"
           : isReservation
-            ? "border-emerald-200 bg-emerald-50 text-emerald-900 border-l-4 border-l-emerald-500"
-            : "border-gray-200 bg-gray-50 text-gray-900 border-l-4 border-l-gray-500")
+            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+            : "border-gray-200 bg-gray-50 text-gray-900")
       }
     >
-      <div className="line-clamp-1 font-medium">{isCleaning ? subjectData.address : data.Subject}</div>
+      <div className="line-clamp-1 font-medium">{isCleaning ? data.CleanerId : data.Subject}</div>
       <div className="mt-0.5 flex items-center gap-2 text-[10px] opacity-80">
         {isCleaning && data.CleanerId ? <span>Cleaner: {data.CleanerId}</span> : null}
         {isReservation && data.ReservationId ? <span>Resv: TestingId</span> : null}

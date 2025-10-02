@@ -1,0 +1,160 @@
+   1: // Domain types and mapping utilities for Syncfusion Scheduler
+   2: 
+   3: export type Property = {
+   4:   id: string;
+   5:   name: string;
+   6:   code?: string;
+   7:   timezone?: string; // IANA tz like "America/New_York"
+   8:   color?: string;
+   9:   address?: string;
+  10: };
+  11: 
+  12: export type Reservation = {
+  13:   id: string;
+  14:   propertyId: string;
+  15:   guestName: string;
+  16:   start: string; // ISO string with TZ offset
+  17:   end: string; // ISO string with TZ offset
+  18:   source?: string; // OTA / Direct
+  19:   status?: string;
+  20: };
+  21: 
+  22: export type CleaningType = "turnover" | "midstay" | "deep";
+  23: 
+  24: export type Cleaning = {
+  25:   id: string;
+  26:   propertyId: string;
+  27:   cleanerId?: string;
+  28:   type: CleaningType;
+  29:   start: string; // ISO string with TZ offset
+  30:   end: string; // ISO string with TZ offset
+  31:   status?: "pending" | "assigned" | "in_progress" | "done";
+  32:   notes?: string;
+  33:   reservationId?: string; // optional linkage
+  34:   jobName?: string; // display name for the cleaning job
+  35: };
+  36: 
+  37: export type Cleaner = {
+  38:   id: string;
+  39:   name: string;
+  40:   color?: string;
+  41:   capacity?: number;
+  42:   status?: "active" | "holiday" | "inactive";
+  43: };
+  44: 
+  45: // Scheduler event type: align with Syncfusion fields
+  46: export type CalendarEvent = {
+  47:   Id: string | number;
+  48:   Subject: string;
+  49:   StartTime: Date;
+  50:   EndTime: Date;
+  51:   IsAllDay?: boolean;
+  52:   // resource linking fields: must match ResourceDirective.field
+  53:   PropertyId?: string;
+  54:   CleanerId?: string;
+  55:   ReservationId?: string;
+  56:   Type?: "reservation" | "cleaning";
+  57:   Status?: string;
+  58:   Notes?: string;
+  59:   Color?: string;
+  60:   CssClass?: string; // Syncfusion event CSS hook
+  61: };
+  62: 
+  63: export function subjectFromReservation(r: Reservation, p?: Property): string {
+  64:   const code = p?.code ? `(${p.code}) ` : "";
+  65:   return `${code}${r.guestName}`.trim();
+  66: }
+  67: 
+  68: export function subjectFromCleaning(
+  69:   c: Cleaning,
+  70:   p?: Property,
+  71:   cleanerName?: string
+  72: ): string {
+  73:   const code = p?.code ? `(${p.code}) ` : "";
+  74:   const who = cleanerName ? ` • ${cleanerName}` : "";
+  75:   return `${code}${capitalize(c.type)} Clean${who}`.trim();
+  76: }
+  77: 
+  78: function capitalize(s: string) {
+  79:   return s.charAt(0).toUpperCase() + s.slice(1);
+  80: }
+  81: 
+  82: export function mapReservationToEvent(
+  83:   r: Reservation,
+  84:   property?: Property
+  85: ): CalendarEvent {
+  86:   return {
+  87:     Id: r.id,
+  88:     Subject: subjectFromReservation(r, property),
+  89:     StartTime: new Date(r.start),
+  90:     EndTime: new Date(r.end),
+  91:     PropertyId: r.propertyId,
+  92:     ReservationId: r.id,
+  93:     Type: "reservation",
+  94:     Status: r.status ?? "confirmed",
+  95:     CssClass: "evt-reservation",
+  96:   };
+  97: }
+  98: 
+  99: export function mapCleaningToEvent(
+ 100:   c: Cleaning,
+ 101:   property?: Property,
+ 102:   cleaner?: Cleaner
+ 103: ): CalendarEvent {
+ 104:   const subject = (c.jobName && c.jobName.trim())
+ 105:     || (property?.address && String(property.address).trim())
+ 106:     || property?.name
+ 107:     || property?.code
+ 108:     || `${capitalize(c.type)} Clean`;
+ 109:   return {
+ 110:     Id: c.id,
+ 111:     Subject: subject,
+ 112:     StartTime: new Date(c.start),
+ 113:     EndTime: new Date(c.end),
+ 114:     PropertyId: c.propertyId,
+ 115:     CleanerId: c.cleanerId,
+ 116:     ReservationId: c.reservationId,
+ 117:     Type: "cleaning",
+ 118:     Status: c.status ?? "pending",
+ 119:     // Consistent cleaner color across all properties
+ 120:     Color: "#2563eb", // primary-ish blue
+ 121:     CssClass: "evt-cleaning",
+ 122:   };
+ 123: }
+ 124: 
+ 125: export function overlaps(
+ 126:   a: { start: Date; end: Date },
+ 127:   b: { start: Date; end: Date }
+ 128: ) {
+ 129:   return a.start < b.end && b.start < a.end;
+ 130: }
+ 131: 
+ 132: export function generateTurnoverCleaning(
+ 133:   r: Reservation,
+ 134:   durationMinutes = 240
+ 135: ): Cleaning {
+ 136:   const start = new Date(r.end);
+ 137:   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+ 138:   return {
+ 139:     id: `clean_${r.id}`,
+ 140:     propertyId: r.propertyId,
+ 141:     type: "turnover",
+ 142:     start: start.toISOString(),
+ 143:     end: end.toISOString(),
+ 144:     status: "pending",
+ 145:     reservationId: r.id,
+ 146:   };
+ 147: }
+ 148: 
+ 149: export function chunkByRange<T extends CalendarEvent>(
+ 150:   events: T[],
+ 151:   rangeStart: Date,
+ 152:   rangeEnd: Date
+ 153: ): T[] {
+ 154:   return events.filter((e) =>
+ 155:     overlaps(
+ 156:       { start: e.StartTime, end: e.EndTime },
+ 157:       { start: rangeStart, end: rangeEnd }
+ 158:     )
+ 159:   );
+ 160: }

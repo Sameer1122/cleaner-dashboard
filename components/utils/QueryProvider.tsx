@@ -16,20 +16,11 @@ const ReactQueryProvider: React.FC<ReactQueryProviderProps> = ({
   // Create a QueryClient instance
   const [queryClient] = useState(
     () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 1000 * 30, // 30s
-            gcTime: 1000 * 60 * 5, // 5m
-            refetchOnWindowFocus: false,
-            retry: 1,
-          },
-        },
-      })
+      new QueryClient()
   );
   useEffect(() => {
-   const SYNCFUSION_LICENSE_KEY = "Ngo9BigBOggjGyl/Vkd+XU9FcVRDX3xKf0x/TGpQb19xflBPallYVBYiSV9jS3tTf0RgWXdacnZWQWBbWE91Xg=="
-registerLicense(SYNCFUSION_LICENSE_KEY);
+    const SYNCFUSION_LICENSE_KEY = "Ngo9BigBOggjGyl/Vkd+XU9FcVRDX3xKf0x/TGpQb19xflBPallYVBYiSV9jS3tTf0RgWXdacnZWQWBbWE91Xg=="
+    registerLicense(SYNCFUSION_LICENSE_KEY);
   }, []);
 
   return (

@@ -169,6 +169,7 @@ export default function Scheduler({ properties, cleaners, reservations, cleaning
       status: c.status ?? "pending",
       notes: c.notes ?? undefined,
       reservationId: c.reservationId ?? c.reservation_id ?? undefined,
+      jobName: c.jobName ?? c.name ?? c.title ?? c.job_name ?? undefined,
     }));
 
     const adaptedProperties: Property[] = apiProps.map((p) => ({
@@ -307,6 +308,7 @@ export default function Scheduler({ properties, cleaners, reservations, cleaning
             startTime: { name: "StartTime" },
             endTime: { name: "EndTime" },
             isAllDay: { name: "IsAllDay" },
+            color: { name: "Color" },
           },
         }}
         group={{ byGroupID: true, resources: viewMode === "properties" ? ["Properties"] : ["Cleaners"], enableCompactView: false }}

@@ -1,0 +1,33 @@
+   1: import { CalendarEvent } from "@/types/domain";
+   2: 
+   3: type Props = { data: CalendarEvent };
+   4: 
+   5: export function EventTemplate({ data }: Props) {
+   6:   const isCleaning = data.Type === "cleaning";
+   7:   const isReservation = data.Type === "reservation";
+   8: 
+   9:   return (
+  10:     <div
+  11:       className={
+  12:         "pointer-events-none w-full overflow-hidden rounded-md border px-2 py-1 text-[11px] leading-tight " +
+  13:         (isCleaning
+  14:           ? "border-blue-200 bg-blue-50 text-blue-900 border-l-4 border-l-blue-500"
+  15:           : isReservation
+  16:             ? "border-emerald-200 bg-emerald-50 text-emerald-900 border-l-4 border-l-emerald-500"
+  17:             : "border-gray-200 bg-gray-50 text-gray-900 border-l-4 border-l-gray-500")
+  18:       }
+  19:     >
+  20:       <div className="line-clamp-1 font-medium">{data.Subject}</div>
+  21:       <div className="mt-0.5 flex items-center gap-2 text-[10px] opacity-80">
+  22:         {isCleaning && data.CleanerId ? <span>Cleaner: {data.CleanerId}</span> : null}
+  23:         {isReservation && data.ReservationId ? <span>Resv: TestingId</span> : null}
+  24:       </div>
+  25:     </div>
+  26:   );
+  27: }
+  28: 
+  29: // Adapter for Syncfusion's eventTemplate prop
+  30: export function eventTemplateAdapter(props: any) {
+  31:   return <EventTemplate data={props as CalendarEvent} />;
+  32: }
+  33: 

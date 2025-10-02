@@ -1,0 +1,357 @@
+   1: "use client";
+   2: 
+   3: import { useEffect, useMemo, useRef, useState } from "react";
+   4: import {
+   5:   ScheduleComponent,
+   6:   ViewsDirective,
+   7:   ViewDirective,
+   8:   Inject,
+   9:   TimelineViews,
+  10:   TimelineMonth,
+  11:   ResourcesDirective,
+  12:   ResourceDirective,
+  13:   DragAndDrop,
+  14:   Resize,
+  15: } from "@syncfusion/ej2-react-schedule";
+  16: // import { registerLicense } from "@syncfusion/ej2-base";
+  17: 
+  18: import { CalendarEvent, Cleaner, Property, Reservation, Cleaning, mapCleaningToEvent, mapReservationToEvent, overlaps } from "@/types/domain";
+  19: import type { EventClickArgs } from "@syncfusion/ej2-react-schedule";
+  20: import { generateMockData } from "./mockData";
+  21: import { eventTemplateAdapter } from "./eventTemplate";
+  22: import AssignmentDrawer from "./AssignmentDrawer";
+  23: import { Button } from "@/components/ui/button";
+  24: import { getAllTheData } from "./request";
+  25: 
+  26: // Register Syncfusion license (uses env var if set, otherwise falls back to provided key)
+  27: 
+  28: 
+  29: type Props = {
+  30:   properties?: Property[];
+  31:   cleaners?: Cleaner[];
+  32:   reservations?: Reservation[];
+  33:   cleanings?: Cleaning[];
+  34: };
+  35: 
+  36: export default function Scheduler({ properties, cleaners, reservations, cleanings }: Props) {
+  37:   console.log({properties, cleaners, reservations, cleanings})
+  38:   // Default dataset: 50 properties with turnover cleaning between consecutive stays
+  39:   const defaults = useMemo(() => generateMockData(50, 2), []);
+  40: 
+  41:   // Local state for data that can be overridden by backend payload
+  42:   const [dsProperties, setDsProperties] = useState<Property[]>(properties ?? defaults.properties);
+  43:   const [dsCleaners, setDsCleaners] = useState<Cleaner[]>(cleaners ?? defaults.cleaners);
+  44:   const [dsReservations, setDsReservations] = useState<Reservation[]>(reservations ?? defaults.reservations);
+  45:   const [dsCleanings, setDsCleanings] = useState<Cleaning[]>(cleanings ?? defaults.cleanings);
+  46:   const scheduleRef = useRef<ScheduleComponent | null>(null);
+  47:   const [viewMode, setViewMode] = useState<"properties" | "cleaners">("properties");
+  48:   const [data, setData] = useState<CalendarEvent[]>(() => {
+  49:     const propMap = new Map(dsProperties.map((p) => [p.id, p] as const));
+  50:     const cleanerMap = new Map(dsCleaners.map((c) => [c.id, c] as const));
+  51:     const r = dsReservations.map((rv) => mapReservationToEvent(rv, propMap.get(rv.propertyId)));
+  52:     const c = dsCleanings.map((cl) => mapCleaningToEvent(cl, propMap.get(cl.propertyId), cl.cleanerId ? cleanerMap.get(cl.cleanerId) : undefined));
+  53:     return [...r, ...c];
+  54:   });
+  55:   const [drawerOpen, setDrawerOpen] = useState(false);
+  56:   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  57:   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  58: 
+  59:   const propertyResource = useMemo(
+  60:     () => dsProperties.map((p) => ({ id: p.id, text: p.name || p.code || p.id, color: p.color || "#888" })),
+  61:     [dsProperties]
+  62:   );
+  63: 
+  64:   const cleanerResource = useMemo(() => dsCleaners.map((c) => ({ id: c.id, text: c.name, color: c.color || "#666" })), [dsCleaners]);
+  65: 
+  66:   const hasCleanerResources = dsCleaners.length > 0;
+  67:   const hasCleaningEvents = useMemo(() => data.some((e) => e.Type === "cleaning"), [data]);
+  68:   const hasReservationEvents = useMemo(() => data.some((e) => e.Type === "reservation"), [data]);
+  69: 
+  70:   function onEventClick(args: EventClickArgs) {
+  71:     const raw = Array.isArray(args?.event) ? args.event[0] : args?.event;
+  72:     const e = raw as CalendarEvent | undefined;
+  73:     if (!e) return;
+  74:     if (e.Type === "cleaning") {
+  75:       setSelectedEvent(e);
+  76:       setDrawerOpen(true);
+  77:     }
+  78:   }
+  79: 
+  80:   function onAssign(cleanerId: string) {
+  81:     if (!selectedEvent) return;
+  82:     setData((curr) => curr.map((ev) => (ev.Id === selectedEvent.Id ? { ...ev, CleanerId: cleanerId } : ev)));
+  83:     setDrawerOpen(false);
+  84:     setSelectedEvent(null);
+  85:   }
+  86: 
+  87:   function validateNoOverlap(next: CalendarEvent, all: CalendarEvent[]) {
+  88:     // prevent cleaning overlap on: same cleaner OR same property for cleaning tasks
+  89:     if (next.Type !== "cleaning") return true;
+  90:     const a = { start: next.StartTime, end: next.EndTime };
+  91:     for (const ev of all) {
+  92:       if (ev.Id === next.Id) continue;
+  93:       if (ev.Type !== "cleaning") continue;
+  94:       const sameCleaner = next.CleanerId && ev.CleanerId && next.CleanerId === ev.CleanerId;
+  95:       const sameProperty = next.PropertyId && ev.PropertyId && next.PropertyId === ev.PropertyId;
+  96:       if ((sameCleaner || sameProperty) && overlaps(a, { start: ev.StartTime, end: ev.EndTime })) {
+  97:         return false;
+  98:       }
+  99:     }
+ 100:     return true;
+ 101:   }
+ 102: 
+ 103:   function onActionBegin(args: any) {
+ 104:     // validate cleaning overlap on create/resize/drag
+ 105:     if (args.requestType === "eventChange" || args.requestType === "eventCreate") {
+ 106:       const items: CalendarEvent[] = Array.isArray(args.data) ? args.data : [args.data];
+ 107:       const next = items[0];
+ 108:       if (!next) return;
+ 109:       const ok = validateNoOverlap(next, data);
+ 110:       if (!ok) {
+ 111:         args.cancel = true;
+ 112:         // naive toast/badge
+ 113:         if (typeof window !== "undefined") {
+ 114:           window.alert("Cleaning conflict: overlapping assignment detected.");
+ 115:         }
+ 116:       } else {
+ 117:         // commit change into local state since we use a plain array dataSource
+ 118:         if (args.requestType === "eventChange") {
+ 119:           setData((curr) => curr.map((e) => (e.Id === next.Id ? { ...e, ...next } : e)));
+ 120:         }
+ 121:         if (args.requestType === "eventCreate") {
+ 122:           setData((curr) => [...curr, ...items]);
+ 123:         }
+ 124:       }
+ 125:     }
+ 126:   }
+ 127: 
+ 128:   // --- Backend integration -------------------------------------------------
+ 129:   function normalizeDateTime(input?: string): string | undefined {
+ 130:     if (!input) return undefined;
+ 131:     // If already ISO-like, return as-is
+ 132:     if (input.includes("T")) return input;
+ 133:     // Convert "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ssZ" (assume UTC)
+ 134:     return input.replace(" ", "T") + "Z";
+ 135:   }
+ 136: 
+ 137:   function toReservationStatus(s?: string): "confirmed" | "cancelled" | "hold" {
+ 138:     const v = (s || "").toUpperCase();
+ 139:     if (v === "CANCELLED" || v === "CANCELED") return "cancelled";
+ 140:     if (v === "HOLD" || v === "ON_HOLD") return "hold";
+ 141:     return "confirmed"; // default for NEW/UNKNOWN
+ 142:   }
+ 143: 
+ 144:   function adaptFromBackend(payload: any) {
+ 145:     const root = payload?.data ?? payload ?? {};
+ 146:     const asArray = (v: any) => (Array.isArray(v) ? v : v ? [v] : []);
+ 147:     const apiProps: any[] = asArray(root.properties);
+ 148:     const apiResv: any[] = asArray(root.reservations);
+ 149:     const apiClean: any[] = asArray(cleanings);
+ 150:     const apiCleaners: any[] = asArray(cleaners);
+ 151: 
+ 152:     const adaptedReservations: Reservation[] = apiResv.map((r) => ({
+ 153:       id: String(r.id ?? r.reservationId ?? ""),
+ 154:       propertyId: String(r.propertyId ?? r.property_id ?? ""),
+ 155:       guestName: String("Faizan"),
+ 156:       start: normalizeDateTime(r.start) ?? new Date().toISOString(),
+ 157:       end: normalizeDateTime(r.end) ?? new Date().toISOString(),
+ 158:       status: toReservationStatus(r.status),
+ 159:       source: r.source ?? undefined,
+ 160:     }));
+ 161: 
+ 162:     const adaptedCleanings: Cleaning[] = apiClean.map((c) => ({
+ 163:       id: String(c.id ?? ""),
+ 164:       propertyId: String(c.propertyId ?? c.property_id ?? ""),
+ 165:       cleanerId: c.cleanerId ?? c.cleaner_id ?? undefined,
+ 166:       type: (c.type ?? "turnover") as Cleaning["type"],
+ 167:       start: normalizeDateTime(c.start) ?? new Date().toISOString(),
+ 168:       end: normalizeDateTime(c.end) ?? new Date().toISOString(),
+ 169:       status: c.status ?? "pending",
+ 170:       notes: c.notes ?? undefined,
+ 171:       reservationId: c.reservationId ?? c.reservation_id ?? undefined,
+ 172:       jobName: c.jobName ?? c.name ?? c.title ?? c.job_name ?? undefined,
+ 173:     }));
+ 174: 
+ 175:     const adaptedProperties: Property[] = apiProps.map((p) => ({
+ 176:       id: String(p.id ?? p.propertyId ?? ""),
+ 177:       name: String(p.name ?? p.title ?? p.code ?? p.id ?? "Property"),
+ 178:       code: p.code ?? undefined,
+ 179:       timezone: p.timezone ?? p.tz ?? undefined,
+ 180:       color: p.color ?? undefined,
+ 181:       address: p.address ?? undefined,
+ 182:     }));
+ 183: 
+ 184:     const adaptedCleaners: Cleaner[] = apiCleaners.map((c) => ({
+ 185:       id: String(c.email?? ""),
+ 186:       name: String(c.name ?? c.fullName ?? c.initials ?? c.id ?? "Cleaner"),
+ 187:       color: c.color ?? undefined,
+ 188:       capacity: c.capacity ?? undefined,
+ 189:       status: c.status ?? "active",
+ 190:     }));
+ 191: 
+ 192:     // Ensure property list contains all referenced ids
+ 193:     const referencedPropIds = new Set<string>();
+ 194:     for (const r of adaptedReservations) referencedPropIds.add(r.propertyId);
+ 195:     for (const c of adaptedCleanings) referencedPropIds.add(c.propertyId);
+ 196:     const propIdsWeHave = new Set(adaptedProperties.map((p) => p.id));
+ 197:     const missingProps: Property[] = Array.from(referencedPropIds)
+ 198:       .filter((id) => id && !propIdsWeHave.has(id))
+ 199:       .map((id) => ({ id, name: id, code: undefined, timezone: undefined, color: "#888", address: undefined }));
+ 200: 
+ 201:     const finalProperties = adaptedProperties.concat(missingProps);
+ 202: 
+ 203:     return {
+ 204:       properties: finalProperties,
+ 205:       reservations: adaptedReservations,
+ 206:       cleanings: adaptedCleanings,
+ 207:       cleaners: adaptedCleaners,
+ 208:     };
+ 209:   }
+ 210: 
+ 211:   useEffect(() => {
+ 212:     let cancelled = false;
+ 213:     (async () => {
+ 214:       try {
+ 215:         const payload = await getAllTheData();
+ 216:         const adapted = adaptFromBackend(payload);
+ 217: 
+ 218:         // Prefer backend payload as source of truth, even if empty
+ 219:         const nextProperties = adapted.properties;
+ 220:         const nextCleaners = adapted.cleaners;
+ 221:         const nextReservations = adapted.reservations;
+ 222:         const nextCleanings = adapted.cleanings;
+ 223: 
+ 224:         if (cancelled) return;
+ 225:         setDsProperties(nextProperties);
+ 226:         setDsCleaners(nextCleaners);
+ 227:         setDsReservations(nextReservations);
+ 228:         setDsCleanings(nextCleanings);
+ 229: 
+ 230:         // Recompute event data source
+ 231:         const propMap = new Map(nextProperties.map((p) => [p.id, p] as const));
+ 232:         const cleanerMap = new Map(nextCleaners.map((c) => [c.id, c] as const));
+ 233:         const r = nextReservations.map((rv) => mapReservationToEvent(rv, propMap.get(rv.propertyId)));
+ 234:         const c = nextCleanings.map((cl) =>
+ 235:           mapCleaningToEvent(cl, propMap.get(cl.propertyId), cl.cleanerId ? cleanerMap.get(cl.cleanerId) : undefined)
+ 236:         );
+ 237:         setData([...r, ...c]);
+ 238: 
+ 239:         // Adjust selected date to the center of backend range or first reservation
+ 240:         const range = (payload?.data ?? payload)?.range;
+ 241:         const rangeFrom = normalizeDateTime(range?.from ?? range?.start);
+ 242:         const rangeTo = normalizeDateTime(range?.to ?? range?.end);
+ 243:         if (rangeFrom && rangeTo) {
+ 244:           const from = new Date(rangeFrom);
+ 245:           const to = new Date(rangeTo);
+ 246:           const mid = new Date((from.getTime() + to.getTime()) / 2);
+ 247:           setSelectedDate(mid);
+ 248:         } else if (nextReservations.length) {
+ 249:           setSelectedDate(new Date(nextReservations[0].start));
+ 250:         } else if (nextCleanings.length) {
+ 251:           setSelectedDate(new Date(nextCleanings[0].start));
+ 252:         }
+ 253:       } catch (e) {
+ 254:         // Swallow errors; continue with existing defaults/props
+ 255:         // console.error("Failed to load scheduler data", e);
+ 256:       }
+ 257:     })();
+ 258:     return () => {
+ 259:       cancelled = true;
+ 260:     };
+ 261:     // Intentionally run once on mount; do not depend on ds* setters
+ 262:     // eslint-disable-next-line react-hooks/exhaustive-deps
+ 263:   }, []);
+ 264: 
+ 265:   return (
+ 266:     <div className="flex flex-col gap-3">
+ 267:       <div className="flex items-center justify-between">
+ 268:         <div className="flex items-center gap-2">
+ 269:           <Button
+ 270:             variant={viewMode === "properties" ? "default" : "secondary"}
+ 271:             onClick={() => setViewMode("properties")}
+ 272:           >
+ 273:             Properties view
+ 274:           </Button>
+ 275:           <Button
+ 276:             variant={viewMode === "cleaners" ? "default" : "secondary"}
+ 277:             disabled={!hasCleanerResources}
+ 278:             onClick={() => hasCleanerResources && setViewMode("cleaners")}
+ 279:           >
+ 280:             Cleaners view
+ 281:           </Button>
+ 282:         </div>
+ 283:         <div className="flex items-center gap-3 text-xs text-muted-foreground">
+ 284:           {hasReservationEvents && (
+ 285:             <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-emerald-500" /> Reservation</span>
+ 286:           )}
+ 287:           {hasCleaningEvents && (
+ 288:             <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-blue-500" /> Cleaning</span>
+ 289:           )}
+ 290:         </div>
+ 291:       </div>
+ 292: 
+ 293:       <ScheduleComponent
+ 294:         ref={(s) => {
+ 295:           scheduleRef.current = s;
+ 296:         }}
+ 297:         height="78vh"
+ 298:         selectedDate={selectedDate}
+ 299:         currentView="TimelineWeek"
+ 300:         allowDragAndDrop={true}
+ 301:         allowResizing={true}
+ 302:         eventSettings={{
+ 303:           dataSource: data as any,
+ 304:           template: eventTemplateAdapter as any,
+ 305:           fields: {
+ 306:             id: "Id",
+ 307:             subject: { name: "Subject" },
+ 308:             startTime: { name: "StartTime" },
+ 309:             endTime: { name: "EndTime" },
+ 310:             isAllDay: { name: "IsAllDay" },
+ 311:             color: { name: "Color" },
+ 312:           },
+ 313:         }}
+ 314:         group={{ byGroupID: true, resources: viewMode === "properties" ? ["Properties"] : ["Cleaners"], enableCompactView: false }}
+ 315:         actionBegin={onActionBegin}
+ 316:         eventClick={onEventClick}
+ 317:       >
+ 318:         <ResourcesDirective>
+ 319:           <ResourceDirective
+ 320:             field="PropertyId"
+ 321:             title="Property"
+ 322:             name="Properties"
+ 323:             textField="text"
+ 324:             idField="id"
+ 325:             colorField="color"
+ 326:             dataSource={propertyResource}
+ 327:           />
+ 328:           <ResourceDirective
+ 329:             field="CleanerId"
+ 330:             title="Cleaner"
+ 331:             name="Cleaners"
+ 332:             textField="text"
+ 333:             idField="id"
+ 334:             colorField="color"
+ 335:             dataSource={cleanerResource}
+ 336:             allowMultiple={false}
+ 337:           />
+ 338:         </ResourcesDirective>
+ 339: 
+ 340:         <ViewsDirective>
+ 341:           <ViewDirective option="TimelineDay" />
+ 342:           <ViewDirective option="TimelineWeek" />
+ 343:           <ViewDirective option="TimelineMonth" />
+ 344:         </ViewsDirective>
+ 345:         <Inject services={[TimelineViews, TimelineMonth, DragAndDrop, Resize]} />
+ 346:       </ScheduleComponent>
+ 347: 
+ 348:       <AssignmentDrawer
+ 349:         open={drawerOpen}
+ 350:         event={selectedEvent}
+ 351:         cleaners={dsCleaners}
+ 352:         onClose={() => setDrawerOpen(false)}
+ 353:         onAssign={onAssign}
+ 354:       />
+ 355:     </div>
+ 356:   );
+ 357: }

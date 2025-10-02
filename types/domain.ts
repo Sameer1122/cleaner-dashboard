@@ -31,6 +31,7 @@ export type Cleaning = {
   status?: "pending" | "assigned" | "in_progress" | "done";
   notes?: string;
   reservationId?: string; // optional linkage
+  jobName?: string; // display name for the cleaning job
 };
 
 export type Cleaner = {
@@ -91,6 +92,7 @@ export function mapReservationToEvent(
     ReservationId: r.id,
     Type: "reservation",
     Status: r.status ?? "confirmed",
+    Color: "#10b981", // emerald-500 for reservations
     CssClass: "evt-reservation",
   };
 }
@@ -100,9 +102,14 @@ export function mapCleaningToEvent(
   property?: Property,
   cleaner?: Cleaner
 ): CalendarEvent {
+  const subject = (c.jobName && c.jobName.trim())
+    || (property?.address && String(property.address).trim())
+    || property?.name
+    || property?.code
+    || `${capitalize(c.type)} Clean`;
   return {
     Id: c.id,
-    Subject: subjectFromCleaning(c, property, cleaner?.name),
+    Subject: subject,
     StartTime: new Date(c.start),
     EndTime: new Date(c.end),
     PropertyId: c.propertyId,
